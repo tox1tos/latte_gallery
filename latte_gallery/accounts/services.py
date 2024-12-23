@@ -1,3 +1,6 @@
+import logging
+from datetime import timedelta
+
 from fastapi import status
 from fastapi.exceptions import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -5,7 +8,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from latte_gallery.accounts.models import Account
 from latte_gallery.accounts.repository import AccountRepository
 from latte_gallery.accounts.schemas import AccountCreateSchema, AccountUpdateSchema
+from latte_gallery.core.db import DatabaseManager
 from latte_gallery.core.schemas import Page
+from passlib.hash import pbkdf2_sha256
+
+logger = logging.getLogger(__name__)
 
 
 class AccountService:
@@ -16,7 +23,7 @@ class AccountService:
         account = await self._repository.find_by_login(schema.login, session)
         if account is not None:
             raise HTTPException(status.HTTP_409_CONFLICT)
-
+        
         account = Account(**schema.model_dump())
 
         session.add(account)
@@ -24,10 +31,12 @@ class AccountService:
 
         return account
 
-    async def authorize(self, login: str, password: str, session: AsyncSession):
+    async def authorize(self, login: str, password: str, session: AsyncSession) -> Account:
         account = await self._repository.find_by_login(login, session)
-        if account is None or account.password != password:
+        if account is None:
             raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+        elif not(pbkdf2_sha256.verify(password, account.password)):
+            raise HTTPException(status.HTTP_418_IM_A_TEAPOT)
         return account
 
     async def find_by_id(self, id: int, session: AsyncSession):
@@ -56,14 +65,46 @@ class AccountService:
         return account
 
     async def update_password_by_id(
-        self, id: int, password: str, session: AsyncSession
+        self, id: int, old_password: str, new_password: str, session: AsyncSession
     ):
         account = await self._repository.find_by_id(id, session)
         if account is None:
             raise HTTPException(status.HTTP_404_NOT_FOUND)
-
-        account.password = password
+        elif not(pbkdf2_sha256.verify(old_password, account.password)):
+            raise HTTPException(status.HTTP_418_IM_A_TEAPOT)
+        account.password = pbkdf2_sha256.hash(new_password)
 
         await session.commit()
 
         return account
+
+
+class AccountsCreator:
+    def __init__(
+        self,
+        accounts: list[AccountCreateSchema],
+        repository: AccountRepository,
+        db_manager: DatabaseManager,
+    ):
+        self._accounts = accounts
+        self._repository = repository
+        self._db_manager = db_manager
+
+    async def initialize(self):
+        logger.info("Started creating initial accounts")
+        async with self._db_manager.get_session() as session:
+            for account in self._accounts:
+                a = await self._repository.find_by_login(account.login, session)
+                if a is not None:
+                    logger.info(f"Account with login={account.login} already exists")
+                    continue
+                account["password"] = pbkdf2_sha256.hash(account["password"])
+
+                a = Account(**account.model_dump())
+                session.add(a)
+
+            await session.commit()
+        logger.info("Finished creating initial accounts")
+
+    async def dispose(self):
+        pass

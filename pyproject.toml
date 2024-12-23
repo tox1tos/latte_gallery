@@ -13,9 +13,13 @@ python = "^3.12"
 fastapi = "^0.115.2"
 pydantic = "^2.9.2"
 uvicorn = "^0.32.0"
-sqlalchemy = "^2.0.36"
 psycopg = {extras = ["binary"], version = "^3.2.3"}
 pydantic-settings = "^2.6.1"
+passlib = "^1.7.4"
+sqlalchemy = "^2.0.36"
+cryptography = "^44.0.0"
+pyjwt = "^2.10.1"
+python-dotenv = "^1.0.1"
 
 
 [build-system]

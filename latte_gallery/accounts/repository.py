@@ -1,7 +1,10 @@
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from latte_gallery.accounts.models import Account
+
 
 
 class AccountRepository:
@@ -16,6 +19,11 @@ class AccountRepository:
         s = await session.execute(q)
         return s.scalar_one_or_none()
 
+    async def find_by_login_without_self(login: str, session: AsyncSession) -> Account | None:
+            q = select(Account).where(Account.login == login)
+            s = await session.execute(q)
+            return s.scalar_one_or_none()
+
     async def count_all(self, session: AsyncSession) -> int:
         q = select(func.count()).select_from(Account)
         s = await session.execute(q)
@@ -24,6 +32,7 @@ class AccountRepository:
     async def find_all(
         self, offset: int, limit: int, session: AsyncSession
     ) -> list[Account]:
-        q = select(Account).offset(offset).limit(limit)
+        q = select(Account).offset(offset).limit(limit).order_by(Account.id)
         s = await session.execute(q)
         return list(s.scalars().all())
+    

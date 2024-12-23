@@ -339,7 +339,7 @@ paths:
         "400": { $ref: "#/components/responses/invalid_format" }
         "401": { $ref: "#/components/responses/invalid_credentials" }
         "403": { $ref: "#/components/responses/forbidden_not_admin" }
-        
+
   /files:
     post:
       tags: [ Файлы ]

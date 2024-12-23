@@ -1,3 +1,4 @@
+
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, StringConstraints
@@ -17,7 +18,7 @@ class AccountSchema(BaseModel):
 LoginStr = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 NameStr = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 PasswordStr = Annotated[
-    str, StringConstraints(min_length=8, pattern=r"^[a-zA-Z0-9_-]+$")
+    str, StringConstraints(min_length=8)
 ]
 
 
@@ -41,4 +42,9 @@ class AccountUpdateSchema(BaseModel):
 
 
 class AccountPasswordUpdateSchema(BaseModel):
+    old_password: PasswordStr
+    new_password: PasswordStr
+
+class GetTokenSchema(BaseModel):
+    login: LoginStr
     password: PasswordStr
