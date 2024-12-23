@@ -1,0 +1,22 @@
+services:
+  backend:
+    build:
+      target: run
+      context: .
+    environment:
+      DB_URL: postgresql+psycopg://user:qwerty12@database:5432/latte_gallery
+    ports:
+      - "8080:8080"
+
+  database:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: qwerty12
+      POSTGRES_DB: latte_gallery
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+
+volumes:
+  db_data:
