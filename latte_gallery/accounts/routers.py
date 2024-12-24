@@ -100,12 +100,12 @@ async def get_my_account(account: AuthenticatedAccount) -> AccountSchema:
 
 
 
-@accounts_router.get("/{id}", summary="Получение аккаунта по идентификатору")
+@accounts_router.get(f"/{id}", summary="Получение аккаунта по идентификатору")
 async def get_account_by_id(
     id: PositiveInt, 
-    account_service: AccountServiceDep = Depends(), 
-    session: SessionDep = Depends(), 
-    current_user: AuthenticatedAccount = Depends()
+    account_service: AccountServiceDep, 
+    session: SessionDep, 
+    current_user: AuthenticatedAccount
 ) -> AccountSchema:
     account = await account_service.find_by_id(id, session)
     if account is None:

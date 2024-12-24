@@ -98,8 +98,6 @@ class AccountsCreator:
                 if a is not None:
                     logger.info(f"Account with login={account.login} already exists")
                     continue
-                account["password"] = pbkdf2_sha256.hash(account["password"])
-
                 a = Account(**account.model_dump())
                 session.add(a)
 
